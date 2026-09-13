@@ -1,0 +1,204 @@
+﻿@model List<AssetsEmployee.Models.Asset>
+@{
+    ViewData["Title"] = "Asset Dashboard";
+}
+
+<!-- Notification Alerts -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Asset Dashboard</h1>
+    <div>
+        @if (User.IsInRole("Admin") || User.IsInRole("ITTechnician"))
+        {
+            <button type="button" class="btn btn-outline-success me-2" data-bs-toggle="modal" data-bs-target="#csvImportModal">
+                <i class="bi bi-file-earmark-arrow-up"></i> Bulk Import CSV
+            </button>
+        }
+        <a asp-controller="Asset" asp-action="AddAsset" class="btn btn-success">
+            <i class="bi bi-box-seam"></i> Add Asset
+        </a>
+    </div>
+</div>
+
+<!-- Search Bar Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" 
+                           id="assetSearchInput" 
+                           class="form-control" 
+                           placeholder="Search by ID, Serial No, Asset Name, or Description..." 
+                           onkeyup="filterAssetTable()" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Asset List</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0" id="assetTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Asset ID</th>
+                        <th>Serial No</th>
+                        <th>Asset Name</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th class="text-center" style="width: 210px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr id="noDataRow">
+                            <td colspan="6" class="text-center py-4 text-muted">No Assets available</td>
+                        </tr>    
+                    }
+                    else
+                    {
+                        @foreach (var asset in Model)
+                        {
+                            <tr>
+                                <td>@asset.AssetId</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        @asset.SerialNumber
+                                    </span>
+                                </td>
+                                <td class="fw-semibold">@asset.AssetName</td>
+                                <td>
+                                    @switch (asset.Status)
+                                    {
+                                        case AssetsEmployee.Models.AssetStatus.Available:
+                                            <span class="badge bg-success">Available</span>
+                                            break;
+                                        case AssetsEmployee.Models.AssetStatus.Assigned:
+                                            <span class="badge bg-primary">Assigned</span>
+                                            break;
+                                        case AssetsEmployee.Models.AssetStatus.UnderRepair:
+                                            <span class="badge bg-warning text-dark">Under Repair</span>
+                                            break;
+                                        case AssetsEmployee.Models.AssetStatus.Retired:
+                                            <span class="badge bg-secondary">Retired</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark border">@asset.Status</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>@(asset.Description ?? "-")</td> 
+                                   <td class="text-center align-middle">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-controller="Asset"
+                                           asp-action="DetailAsset"
+                                           asp-route-assetid="@asset.AssetId"
+                                           class="btn btn-outline-info"
+                                           title="View QR Tag, Specs & Custody Log">
+                                            <i class="bi bi-eye"></i> Details
+                                        </a>
+                                        <a asp-controller="Asset"
+                                           asp-action="UpdateAsset"
+                                           class="btn btn-outline-primary"
+                                           asp-route-assetid="@asset.AssetId">
+                                            Update
+                                        </a>
+                                        <a asp-controller="Asset"
+                                           asp-action="ConfirmDeleteAsset"
+                                           asp-route-assetid="@asset.AssetId"
+                                           class="btn btn-outline-danger">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }   
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for CSV Import -->
+<div class="modal fade" id="csvImportModal" tabindex="-1" aria-labelledby="csvImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="csvImportModalLabel">Bulk Import Assets</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Asset" asp-action="ImportCsv" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label fw-bold">Select CSV File</label>
+                        <input class="form-control" type="file" id="csvFile" name="csvFile" accept=".csv" required />
+                    </div>
+                    <div class="alert alert-info py-2 small mb-0">
+                        <strong>CSV Format Requirements:</strong>
+                        <ul class="mb-0 ps-3">
+                            <li>Must have a header row: <code>AssetName,SerialNumber</code></li>
+                            <li>Column 1: Asset Name</li>
+                            <li>Column 2: Serial Number</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Upload & Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side Instant Filtering Script -->
+@section Scripts {
+    <script>
+        function filterAssetTable() {
+            const input = document.getElementById("assetSearchInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("assetTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].id === "noDataRow") continue;
+
+                let rowText = tr[i].textContent || tr[i].innerText;
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById("assetSearchInput").value = "";
+            filterAssetTable();
+        }
+    </script>
+}

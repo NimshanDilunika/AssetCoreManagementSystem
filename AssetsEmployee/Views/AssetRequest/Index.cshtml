@@ -1,0 +1,86 @@
+﻿@model IEnumerable<AssetsEmployee.Models.AssetRequest>
+@{
+    ViewData["Title"] = "Equipment Requests";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Equipment Requests</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> New Request
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Employee</th>
+                        <th>Requested Item</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th class="text-center" style="width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>#@item.RequestId</td>
+                            <td class="fw-semibold">@item.Employee?.EmployeeName</td>
+                            <td><span class="badge bg-secondary">@item.RequestedCategory</span></td>
+                            <td>@item.Reason</td>
+                            <td>
+                                @switch (item.Status)
+                                {
+                                    case AssetsEmployee.Models.RequestStatus.Pending:
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        break;
+                                    case AssetsEmployee.Models.RequestStatus.Fulfilled:
+                                    case AssetsEmployee.Models.RequestStatus.Approved:
+                                        <span class="badge bg-success">Accepted</span>
+                                        break;
+                                    case AssetsEmployee.Models.RequestStatus.Rejected:
+                                        <span class="badge bg-danger">Rejected</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (item.Status == AssetsEmployee.Models.RequestStatus.Pending && (User.IsInRole("Admin") || User.IsInRole("ITTechnician") || User.IsInRole("DepartmentManager")))
+                                {
+                                    <div class="d-inline-flex gap-1">
+                                        <!-- Accept Button -->
+                                        <form asp-action="Review" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="requestId" value="@item.RequestId" />
+                                            <input type="hidden" name="status" value="2" /> <!-- 2 = Approved -->
+                                            <button type="submit" class="btn btn-sm btn-success" title="Accept Request">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Reject Button -->
+                                        <form asp-action="Review" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="requestId" value="@item.RequestId" />
+                                            <input type="hidden" name="status" value="3" /> <!-- 3 = Rejected -->
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Reject Request">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small class="text-muted">Handled by: @(item.ActionedByUserId ?? "admin")</small>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

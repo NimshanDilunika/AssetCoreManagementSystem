@@ -1,0 +1,82 @@
+﻿@model List<AssetsEmployee.Models.Employee>
+@{
+    ViewData["Title"] = "Employee Dashboard";
+}
+
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-1">Employee Dashboard</h1>
+            <p class="text-muted mb-0">Overview of employees assigned to department</p>
+        </div>
+           <div>
+            <!-- Back Button -->
+            <a asp-controller="Department" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Department
+            </a>
+        </div>
+    </div>
+
+    <!-- Department Info Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body bg-light rounded">
+            <h5 class="card-subtitle text-muted text-uppercase fs-7 fw-bold mb-1">Department Name</h5>
+            <h3 class="card-title text-dark mb-0 fw-semibold">
+                @(Model.FirstOrDefault()?.Department?.DepartmentName ?? "N/A")
+            </h3>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fw-bold text-secondary">Employee List</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase fs-7">
+                    <tr>
+                        <th class="ps-4" style="width: 15%;">Employee ID</th>
+                        <th style="width: 35%;">Employee Name</th>
+                        <th style="width: 30%;">Email</th>
+                        <th style="width: 20%;">Phone No</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-people display-6 d-block mb-2"></i>
+                                No employees available for this department.
+                            </td>
+                        </tr>    
+                    }
+                    else
+                    {
+                        @foreach (var employee in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-semibold text-secondary">#@employee.EmployeeId</td>
+                                <td>
+                                    <span class="fw-bold text-dark">@employee.EmployeeName</span>
+                                </td>
+                                <td>
+                                    <a href="mailto:@employee.Email" class="text-decoration-none text-body">
+                                        <i class="bi bi-envelope text-muted me-1"></i>@(employee.Email ?? "-")
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">
+                                        <i class="bi bi-telephone text-muted me-1"></i>@(employee.PhoneNo ?? "-")
+                                    </span>
+                                </td>
+                            </tr>
+                        }   
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

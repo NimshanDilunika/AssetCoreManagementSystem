@@ -1,0 +1,162 @@
+﻿@model List<AssetsEmployee.Models.EmployeeAsset>
+@{
+    ViewData["Title"] = "Employee Asset Dashboard";
+    bool canManage = User.IsInRole("Admin") || User.IsInRole("ITTechnician");
+    bool isOfficeUser = User.IsInRole("OfficeUser");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">
+        @(isOfficeUser ? "My Assigned Equipment" : "Assigned Assets Dashboard")
+    </h1>
+
+    <!-- Top Action: Admin and ITTechnician Only -->
+    @if (canManage)
+    {
+        <a asp-controller="EmployeeAsset" asp-action="AddEmployeeAsset" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> Assign Asset
+        </a>
+    }
+</div>
+
+<!-- Search Bar Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" 
+                           id="tableSearchInput" 
+                           class="form-control" 
+                           placeholder="Search by ID, Serial No, or Employee Name..." 
+                           onkeyup="filterDashboardTable()" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Assigned Asset List</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0" id="assetsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Type / Serial No</th>
+                        <th>Employee Name</th>
+                        <th>Assigned Date</th>
+                        <th>Status</th>
+                        <!-- Action Header: Admin and ITTechnician Only -->
+                        @if (canManage)
+                        {
+                            <th class="text-center" style="width: 160px;">Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr id="noDataRow">
+                            <td colspan="@(canManage ? (isOfficeUser ? 5 : 6) : (isOfficeUser ? 4 : 5))" class="text-center py-4 text-muted">
+                                No assignments available
+                            </td>
+                        </tr>    
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@(item.Asset?.AssetName ?? "N/A") - @(item.Asset?.SerialNo ?? "N/A")</td>
+                                <td>@(item.Employee?.EmployeeName ?? "N/A")</td>
+                                <td>@(item.AssignedDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                <td>
+                                    @if (item.UnAssignedDate == null)
+                                    {
+                                        @if (canManage)
+                                        {
+                                            <a asp-controller="EmployeeAsset"
+                                               asp-action="ConfirmUnassign"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-warning">
+                                                Unassign
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Unassigned</span>
+                                        <small class="text-muted d-block mt-1">@item.UnAssignedDate?.ToString("yyyy-MM-dd")</small>
+                                    }
+                                </td>
+
+                                <!-- Action Buttons: Admin and ITTechnician Only -->
+                                @if (canManage)
+                                {
+                                    <td class="text-center align-middle">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a asp-controller="EmployeeAsset"
+                                               asp-action="UpdateEmployeeAsset"
+                                               class="btn btn-outline-primary"
+                                               asp-route-id="@item.Id">
+                                                Update
+                                            </a>
+                                            @if (User.IsInRole("Admin"))
+                                            {
+                                                <a asp-controller="EmployeeAsset"
+                                                   asp-action="ConfirmDelete"
+                                                   asp-route-id="@item.Id"
+                                                   class="btn btn-outline-danger">
+                                                    Delete
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }   
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side Instant Filtering Script -->
+@section Scripts {
+    <script>
+        function filterDashboardTable() {
+            const input = document.getElementById("tableSearchInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("assetsTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].id === "noDataRow") continue;
+
+                let rowText = tr[i].textContent || tr[i].innerText;
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById("tableSearchInput").value = "";
+            filterDashboardTable();
+        }
+    </script>
+}

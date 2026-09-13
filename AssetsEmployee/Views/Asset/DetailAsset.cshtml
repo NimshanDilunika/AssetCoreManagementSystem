@@ -1,0 +1,253 @@
+﻿@model List<AssetsEmployee.Models.EmployeeAsset>
+@{
+    ViewData["Title"] = "Asset Details & Assignment History";
+    var asset = ViewBag.TargetAsset as AssetsEmployee.Models.Asset ?? Model?.FirstOrDefault()?.Asset;
+}
+<style>
+    @@media print {
+        /* Hide everything on the page */
+        body * {
+            visibility: hidden;
+        }
+
+        /* Make only the target card and its contents visible */
+        #printableAssetTag, #printableAssetTag * {
+            visibility: visible;
+        }
+
+        /* Position the tag squarely at the top-left of the sticker/paper */
+        #printableAssetTag {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px !important;
+            margin: 0 !important;
+            padding: 10px !important;
+            border: 2px solid #000 !important;
+            border-radius: 8px;
+            background: #fff !important;
+            box-shadow: none !important;
+        }
+
+        /* Ensure QR code and badges display in high contrast black/white for thermal or label printers */
+        #printableAssetTag img {
+            max-width: 180px !important;
+            border: none !important;
+        }
+
+        #printableAssetTag .badge {
+            border: 1px solid #000 !important;
+            color: #000 !important;
+            background-color: transparent !important;
+            font-size: 11pt !important;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <!-- Action Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-1">Asset Details & History</h1>
+            <p class="text-muted mb-0">Hardware specifications, physical tag, and employee custody records</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-printer"></i> Print Asset Tag
+            </button>
+            <a asp-controller="Asset" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Assets
+            </a>
+        </div>
+    </div>
+
+    @if (asset != null)
+    {
+        <!-- Unified Header: Asset Info, QR Tag, Financials & Warranty -->
+        <div class="row g-3 mb-4">
+            <!-- QR Badge Column (Only this prints) -->
+                <div class="col-md-3" id="printableAssetTag">
+                    <div class="card shadow-sm text-center h-100 border-0 bg-light">
+                        <div class="card-body p-3 d-flex flex-column align-items-center justify-content-center">
+                            @if (ViewBag.QrCodeImage != null)
+                            {
+                                <img src="@ViewBag.QrCodeImage" alt="Asset QR" class="img-fluid border bg-white p-1 rounded mb-2" style="max-width: 140px;" />
+                            }
+                            <span class="badge bg-secondary mb-1">SN: @(asset.SerialNo ?? "NO-SERIAL")</span>
+                            <span class="badge @(asset.Status == AssetsEmployee.Models.AssetStatus.Available ? "bg-success" : "bg-primary")">
+                                @asset.Status
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Hardware & Valuation Summary Column -->
+            <div class="col-md-9">
+                <div class="card shadow-sm h-100 border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h3 class="card-title text-dark fw-bold mb-1">@asset.AssetName</h3>
+                                <p class="text-muted mb-0 small">@(string.IsNullOrWhiteSpace(asset.Description) ? "No additional description provided." : asset.Description)</p>
+                            </div>
+                         <div class="d-flex flex-column align-items-end gap-1">
+    <div>
+        @if (!asset.WarrantyExpiryDate.HasValue)
+        {
+            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
+                <i class="bi bi-shield-slash"></i> No Warranty Tracked
+            </span>
+        }
+        else if (asset.IsUnderWarranty)
+        {
+            var days = (asset.WarrantyExpiryDate.Value.Date - DateTime.UtcNow.Date).Days;
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                <i class="bi bi-shield-check"></i> Warranty Active (@days days left)
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                <i class="bi bi-shield-x"></i> Warranty Expired
+            </span>
+        }
+    </div>
+
+    <!-- Warranty Provider Display -->
+    <div class="small text-muted">
+      
+        <span>Provider: </span>
+        <strong class="text-dark">
+            @(string.IsNullOrWhiteSpace(asset.WarrantyProvider) ? "Not Specified" : asset.WarrantyProvider)
+        </strong>
+    </div>
+</div>
+                        </div>
+
+                        <!-- Financial Metric Row -->
+                        <div class="row text-center g-2 pt-2 border-top">
+                            <div class="col-3 border-end">
+                                <small class="text-muted d-block">Original Cost</small>
+                                @if (asset.PurchaseCost > 0)
+                                {
+                                    <span class="fw-bold text-dark">$@asset.PurchaseCost.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Not Recorded</span>
+                                }
+                            </div>
+                            <div class="col-3 border-end">
+                                <small class="text-muted d-block">Salvage Floor</small>
+                                @if (asset.SalvageValue > 0)
+                                {
+                                    <span class="fw-bold text-muted">$@asset.SalvageValue.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">$0.00</span>
+                                }
+                            </div>
+                            <div class="col-3 border-end">
+                                <small class="text-muted d-block">Current Book Value</small>
+                                @if (asset.PurchaseCost > 0)
+                                {
+                                    <span class="fw-bold text-success">$@asset.CurrentBookValue.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">N/A</span>
+                                }
+                            </div>
+                            <div class="col-3">
+                                <small class="text-muted d-block">Warranty Expiry</small>
+                                <span class="fw-semibold text-secondary">
+                                    @(asset.WarrantyExpiryDate.HasValue ? asset.WarrantyExpiryDate.Value.ToString("yyyy-MM-dd") : "Not Set")
+                                </span>
+                            </div>
+                        </div>
+
+                        @if (asset.PurchaseCost > 0 && asset.PurchaseDate.HasValue)
+                        {
+                            decimal totalDepreciable = asset.PurchaseCost - asset.SalvageValue;
+                            decimal depreciatedAmount = asset.PurchaseCost - asset.CurrentBookValue;
+                            int percent = (totalDepreciable > 0) ? (int)((depreciatedAmount / totalDepreciable) * 100) : 0;
+                            percent = Math.Clamp(percent, 0, 100);
+
+                            <div class="mt-3">
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: @percent%;"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1" style="font-size: 0.75rem;">
+                                    <span class="text-muted">Depreciation: @percent%</span>
+                                    <span class="text-muted">Lifecycle: @asset.UsefulLifeMonths Months</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Assignment History Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="card-title mb-0 fw-bold text-secondary">Custody & Assignment History</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-uppercase fs-7">
+                    <tr>
+                        <th class="ps-4" style="width: 10%;">ID</th>
+                        <th style="width: 40%;">Employee Name</th>
+                        <th style="width: 25%;">Assigned Date</th>
+                        <th style="width: 25%;">Unassigned Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                                No assignment history recorded for this asset.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-semibold text-secondary">#@item.Id</td>
+                                <td>
+                                    <span class="fw-bold text-dark">@(item.Employee?.EmployeeName ?? "N/A")</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                        @(item.AssignedDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (item.UnAssignedDate.HasValue)
+                                    {
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                            @item.UnAssignedDate.Value.ToString("yyyy-MM-dd HH:mm")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                                            Currently Active
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

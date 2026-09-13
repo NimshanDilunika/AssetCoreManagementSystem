@@ -1,0 +1,28 @@
+﻿@model AssetsEmployee.Models.Department
+@{
+    ViewData["Title"] = "Update Department";
+
+}
+<div class="text-center">
+    <h1 class="display-4">Update Department</h1>
+</div>
+
+<form asp-controller="Department" asp-action="UpdateDepartmentItem" method="post">
+    <div class="mb-3">
+        <label for="departmentname" class="form-label">Department Name</label>
+        <input type="text"  value="@Model.DepartmentName"name="departmentname" class="form-control" id="departmentname" placeholder="Enter Department Name" />
+    </div>
+    <div class="mb-3">
+        <label for="location" class="form-label">Location</label>
+        <input type="text" value="@Model.Location"name="location" class="form-control" id="location" placeholder="Enter Location" />
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <input type="text" value="@Model.Description" name="description" class="form-control" id="description" placeholder="Enter description" />
+    </div>
+    <input type="hidden" name="departmentid" value="@Model.DepartmentId" />
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Update Department</button>
+        <a asp-controller="Department" asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

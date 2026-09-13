@@ -1,0 +1,53 @@
+﻿@model AssetsEmployee.Models.Employee
+@{
+    ViewData["Title"] = "Add Employee";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Add Employee</h1>
+</div>
+
+<form asp-controller="Employee" asp-action="AddEmployeeItem" method="post">
+    <div class="mb-3">
+    <label for="employeename" class="form-label">Employee Name</label>
+    <input type="text" 
+           name="employeename" 
+           class="form-control" 
+           id="employeename" 
+           placeholder="Enter Employee Name" 
+           oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');" 
+           required />
+    <span class="text-danger">@Html.ValidationMessage("EmployeeName")</span>
+</div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email" required />
+        <span class="text-danger">@Html.ValidationMessage("Email")</span>
+    </div>
+    <div class="mb-3">
+        <label for="phoneno" class="form-label">Phone No</label>
+        <input type="text"
+               name="phoneno"
+               class="form-control"
+               id="phoneno"
+               placeholder="Enter 10-digit phone number"
+               maxlength="10"
+               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+               required />
+        <span class="text-danger">@Html.ValidationMessage("PhoneNo")</span>
+    </div>
+    <div class="mb-3">
+        <label for="departmentid" class="form-label">Department</label>
+        <select name="departmentid" class="form-select" id="departmentid" required>
+            <option value="">-- Select Department --</option>
+            @if (ViewBag.Departments != null)
+            {
+                foreach (var dept in ViewBag.Departments)
+                {
+                    <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                }
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Employee</button>
+</form>

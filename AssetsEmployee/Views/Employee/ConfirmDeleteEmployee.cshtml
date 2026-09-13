@@ -1,0 +1,45 @@
+﻿@model AssetsEmployee.Models.Employee
+@{
+    ViewData["Title"] = "Confirm Delete Employee";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-person-x-fill"></i> Confirm Employee Deletion</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead text-danger fw-semibold">Are you sure you want to permanently delete this employee?</p>
+                
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Employee ID:</dt>
+                    <dd class="col-sm-8">@Model.EmployeeId</dd>
+
+                    <dt class="col-sm-4">Employee Name:</dt>
+                    <dd class="col-sm-8 fw-bold">@Model.EmployeeName</dd>
+
+                    <dt class="col-sm-4">Email:</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+
+                    <dt class="col-sm-4">Phone No:</dt>
+                    <dd class="col-sm-8">@Model.PhoneNo</dd>
+
+                    <dt class="col-sm-4">Department:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-info text-dark">
+                            @(Model.Department?.DepartmentName ?? "N/A")
+                        </span>
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <a asp-controller="Employee" asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <form asp-controller="Employee" asp-action="DeleteEmployee" method="post">
+                    <input type="hidden" name="employeeid" value="@Model.EmployeeId" />
+                    <button type="submit" class="btn btn-danger">Yes, Delete Employee</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

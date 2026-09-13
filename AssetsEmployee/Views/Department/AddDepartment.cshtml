@@ -1,0 +1,24 @@
+﻿@model AssetsEmployee.Models.Department
+
+@{
+    ViewData["Title"] = "Add Department";
+
+}
+<div class="text-center">
+    <h1 class="display-4">Add Department</h1>
+</div>
+<form asp-controller="Department" asp-action="AddDepartmentItem" method="post">
+        <div class="mb-3">
+            <label for="departmentname" class="form-label">Department Name</label>
+            <input type="text" name="departmentname" class="form-control" id="departmentname" placeholder="Enter Department Name" />
+        </div>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" name="location" class="form-control" id="location" placeholder="Enter Location" />
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <input type="text" name="description" class="form-control" id="description" placeholder="Enter description" />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Department</button>
+    </form>

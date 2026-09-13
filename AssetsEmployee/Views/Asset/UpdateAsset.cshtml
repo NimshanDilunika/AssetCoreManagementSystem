@@ -1,0 +1,79 @@
+﻿@model AssetsEmployee.Models.Asset
+@{
+    ViewData["Title"] = "Edit Asset";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Edit Asset: @Model.AssetName</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UpdateAssetItem" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="assetid" value="@Model.AssetId" />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Asset Name</label>
+                                <input type="text" name="assetname" class="form-control" value="@Model.AssetName" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Serial Number</label>
+                                <input type="text" name="serialno" class="form-control" value="@Model.SerialNo" required />
+                                <span class="text-danger">@Html.ValidationMessage("SerialNo")</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2">@Model.Description</textarea>
+                        </div>
+
+                        <h6 class="border-bottom pb-2 pt-2 text-secondary fw-bold">Financials & Depreciation</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Date</label>
+                                <input type="date" name="purchaseDate" class="form-control" 
+                                       value="@(Model.PurchaseDate?.ToString("yyyy-MM-dd"))" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Cost ($)</label>
+                                <input type="number" step="0.01" name="purchaseCost" class="form-control" value="@Model.PurchaseCost" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Salvage Floor ($)</label>
+                                <input type="number" step="0.01" name="salvageValue" class="form-control" value="@Model.SalvageValue" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Useful Lifecycle (Months)</label>
+                            <input type="number" name="usefulLifeMonths" class="form-control" value="@Model.UsefulLifeMonths" />
+                        </div>
+
+                        <h6 class="border-bottom pb-2 pt-2 text-secondary fw-bold">Warranty Details</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Warranty Expiry Date</label>
+                                <input type="date" name="warrantyExpiryDate" class="form-control" 
+                                       value="@(Model.WarrantyExpiryDate?.ToString("yyyy-MM-dd"))" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Warranty Provider / Vendor</label>
+                                <input type="text" name="warrantyProvider" class="form-control" value="@Model.WarrantyProvider" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Update Asset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

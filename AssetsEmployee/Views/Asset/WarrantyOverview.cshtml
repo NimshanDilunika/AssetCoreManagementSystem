@@ -1,0 +1,59 @@
+﻿@model IEnumerable<AssetsEmployee.Models.Asset>
+@{
+    ViewData["Title"] = "Warranty Expiration Monitor";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Hardware Warranty Monitor</h2>
+    <a asp-action="Index" class="btn btn-secondary">Back to Assets</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Asset Name</th>
+                        <th>Serial No</th>
+                        <th>Provider</th>
+                        <th>Expiry Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var asset in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@asset.AssetName</td>
+                            <td><span class="badge bg-light text-dark border">@asset.SerialNo</span></td>
+                            <td>@(asset.WarrantyProvider ?? "Manufacturer")</td>
+                            <td>@(asset.WarrantyExpiryDate.HasValue ? asset.WarrantyExpiryDate.Value.ToString("yyyy-MM-dd") : "-")</td>
+                            <td>
+                                @if (!asset.WarrantyExpiryDate.HasValue)
+                                {
+                                    <span class="badge bg-secondary">Untracked</span>
+                                }
+                                else if (asset.IsUnderWarranty)
+                                {
+                                    var days = (asset.WarrantyExpiryDate.Value.Date - DateTime.UtcNow.Date).Days;
+                                    <span class="badge bg-success">Active (@days days left)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Expired</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@asset.AssetId" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-qr-code"></i> View Tag
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

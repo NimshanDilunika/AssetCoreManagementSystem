@@ -1,0 +1,125 @@
+﻿@model List<AssetsEmployee.Models.Department>
+@{
+    ViewData["Title"] = "Department Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Department Dashboard</h1>
+    <a asp-controller="Department" asp-action="AddDepartment" class="btn btn-success">
+        <i class="bi bi-building-add"></i> Add Department
+    </a>
+</div>
+
+<!-- Search Bar Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" 
+                           id="departmentSearchInput" 
+                           class="form-control" 
+                           placeholder="Search by ID, Department Name, Location, or Description..." 
+                           onkeyup="filterDepartmentTable()" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Department List</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0" id="departmentTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Department ID</th>
+                        <th>Department Name</th>
+                        <th>Location</th>
+                        <th>Description</th>
+                        <th class="text-center" style="width: 210px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr id="noDataRow">
+                            <td colspan="5" class="text-center py-4 text-muted">No Department available</td>
+                        </tr>    
+                    }
+                    else
+                    {
+                        @foreach (var department in Model)
+                        {
+                            <tr>
+                                <td>@department.DepartmentId</td>
+                                <td class="fw-semibold">@department.DepartmentName</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="bi bi-geo-alt"></i> @(department.Location ?? "N/A")
+                                    </span>
+                                </td>
+                                 <td>@(department.Description ?? "-")</td> 
+                                 <td class="text-center align-middle">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-controller="Department" 
+                                           asp-action="DetailDepartment" 
+                                           class="btn btn-outline-secondary" 
+                                           asp-route-departmentid="@department.DepartmentId">
+                                            Detail
+                                        </a>
+                                        <a asp-controller="Department" 
+                                           asp-action="UpdateDepartment" 
+                                           class="btn btn-outline-primary" 
+                                           asp-route-departmentid="@department.DepartmentId">
+                                            Update
+                                        </a>
+                                        <a asp-controller="Department" 
+                                           asp-action="ConfirmDeleteDepartment" 
+                                           asp-route-departmentid="@department.DepartmentId" 
+                                           class="btn btn-outline-danger">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }   
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side Instant Filtering Script -->
+@section Scripts {
+    <script>
+        function filterDepartmentTable() {
+            const input = document.getElementById("departmentSearchInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("departmentTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].id === "noDataRow") continue;
+
+                let rowText = tr[i].textContent || tr[i].innerText;
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById("departmentSearchInput").value = "";
+            filterDepartmentTable();
+        }
+    </script>
+}

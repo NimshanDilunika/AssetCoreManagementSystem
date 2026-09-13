@@ -1,0 +1,65 @@
+﻿@model AssetsEmployee.Models.Employee
+@{
+    ViewData["Title"] = "Update Employee";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Update Employee</h1>
+</div>
+
+<form asp-controller="Employee" asp-action="UpdateEmployeeItem" method="post">
+    <div class="mb-3">
+    <label for="employeename" class="form-label">Employee Name</label>
+    <input type="text" 
+           name="employeename" 
+           value="@Model?.EmployeeName" 
+           class="form-control" 
+           id="employeename" 
+           placeholder="Enter Employee Name" 
+           oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');" 
+           required />
+    <span class="text-danger">@Html.ValidationMessage("EmployeeName")</span>
+</div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" value="@Model.Email" name="email" class="form-control" id="email" required />
+        <span class="text-danger">@Html.ValidationMessage("Email")</span>
+    </div>
+    <div class="mb-3">
+        <label for="phoneno" class="form-label">Phone No</label>
+        <input type="text"
+               value="@Model.PhoneNo"
+               name="phoneno"
+               class="form-control"
+               id="phoneno"
+               maxlength="10"
+               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+               required />
+        <span class="text-danger">@Html.ValidationMessage("PhoneNo")</span>
+    </div>
+    <div class="mb-3">
+        <label for="departmentid" class="form-label">Department</label>
+        <select name="departmentid" class="form-select" id="departmentid" required>
+            <option value="">-- Select Department --</option>
+            @if (ViewBag.Departments != null)
+            {
+                foreach (var dept in ViewBag.Departments)
+                {
+                    if (dept.DepartmentId == Model.DepartmentId)
+                    {
+                        <option value="@dept.DepartmentId" selected>@dept.DepartmentName</option>
+                    }
+                    else
+                    {
+                        <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+    <input type="hidden" name="employeeid" value="@Model.EmployeeId" />
+   <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Update Employee</button>
+        <a asp-controller="Employee" asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

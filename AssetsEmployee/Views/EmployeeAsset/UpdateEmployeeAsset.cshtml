@@ -1,0 +1,68 @@
+﻿@model AssetsEmployee.Models.EmployeeAsset
+@{
+    ViewData["Title"] = "Update Assignment";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Update Assignment</h1>
+</div>
+
+<form asp-controller="EmployeeAsset" asp-action="UpdateEmployeeAssetItem" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label for="assetid" class="form-label">Asset (Serial No)</label>
+        <select name="assetid" class="form-select" id="assetid" required>
+            <option value="">-- Select Serial No --</option>
+            @if (ViewBag.Assets != null)
+            {
+                foreach (var asset in ViewBag.Assets)
+                {
+                    if (asset.AssetId == Model.AssetId)
+                    {
+                        <option value="@asset.AssetId" selected>@asset.SerialNo - @asset.AssetName (Currently Assigned)</option>
+                    }
+                    else
+                    {
+                        <option value="@asset.AssetId">@asset.SerialNo - @asset.AssetName</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="employeeid" class="form-label">Employee Name</label>
+        <select name="employeeid" class="form-select" id="employeeid" required>
+            <option value="">-- Select Employee --</option>
+            @if (ViewBag.Employees != null)
+            {
+                foreach (var emp in ViewBag.Employees)
+                {
+                    if (emp.EmployeeId == Model.EmployeeId)
+                    {
+                        <option value="@emp.EmployeeId" selected>@emp.EmployeeName</option>
+                    }
+                    else
+                    {
+                        <option value="@emp.EmployeeId">@emp.EmployeeName</option>
+                    }
+                }
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label for="assigneddate" class="form-label">Assigned Date</label>
+        <input type="datetime-local" 
+               name="assigneddate" 
+               class="form-control" 
+               id="assigneddate" 
+               value="@(Model.AssignedDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Update Record</button>
+        <a asp-controller="EmployeeAsset" asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

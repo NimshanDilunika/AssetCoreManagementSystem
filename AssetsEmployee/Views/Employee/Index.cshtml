@@ -1,0 +1,126 @@
+﻿@model List<AssetsEmployee.Models.Employee>
+@{
+    ViewData["Title"] = "Employee Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Employee Dashboard</h1>
+    <a asp-controller="Employee" asp-action="AddEmployee" class="btn btn-success">
+        <i class="bi bi-person-plus-fill"></i> Add Employee
+    </a>
+</div>
+
+<!-- Search Bar Section -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" 
+                           id="employeeSearchInput" 
+                           class="form-control" 
+                           placeholder="Search by ID, Name, Email, Phone, or Department..." 
+                           onkeyup="filterEmployeeTable()" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Employee List</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0" id="employeeTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Employee Name</th>
+                        <th>Email</th>
+                        <th>Phone No</th>
+                        <th>Department</th>
+                        <th class="text-center" style="width: 210px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr id="noDataRow">
+                            <td colspan="6" class="text-center py-4 text-muted">No Employee available</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var employee in Model)
+                        {
+                            <tr>
+                                <td>@employee.EmployeeId</td>
+                                <td class="fw-semibold">@employee.EmployeeName</td>
+                                <td>@employee.Email</td>
+                                <td>@employee.PhoneNo</td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        @(employee.Department?.DepartmentName ?? "N/A")
+                                    </span>
+                                <td class="text-center align-middle">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a asp-controller="Employee" 
+                                           asp-action="DetailEmployee" 
+                                           class="btn btn-outline-secondary" 
+                                           asp-route-employeeid="@employee.EmployeeId">
+                                            Detail
+                                        </a>
+                                        <a asp-controller="Employee" 
+                                           asp-action="UpdateEmployee" 
+                                           class="btn btn-outline-primary" 
+                                           asp-route-employeeid="@employee.EmployeeId">
+                                            Update
+                                        </a>
+                                        <a asp-controller="Employee" 
+                                           asp-action="ConfirmDeleteEmployee" 
+                                           asp-route-employeeid="@employee.EmployeeId" 
+                                           class="btn btn-outline-danger">
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Client-side Instant Filtering Script -->
+@section Scripts {
+    <script>
+        function filterEmployeeTable() {
+            const input = document.getElementById("employeeSearchInput");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("employeeTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                if (tr[i].id === "noDataRow") continue;
+
+                let rowText = tr[i].textContent || tr[i].innerText;
+                if (rowText.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById("employeeSearchInput").value = "";
+            filterEmployeeTable();
+        }
+    </script>
+}
