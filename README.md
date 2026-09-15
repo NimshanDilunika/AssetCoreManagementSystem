@@ -82,7 +82,7 @@ The application uses an N-Tier Model-View-Controller (MVC) architecture with cus
 | `AppNotification` | `Id` | `Message`, `TargetRole`, `IsCleared`, `CreatedAt` | Role-targeted administrative alert feed |
 
 ### Data Flow
-
+```
 Browser (User)                 EmployeeAssetController          Entity Framework Core            SQL Server
      │                                    │                               │                          │
   1  ├── Open Assign Asset View ─────────►│                               │                          │
@@ -119,7 +119,7 @@ Browser (User)                 EmployeeAssetController          Entity Framework
   4  ├── Instant Custody Filter ──────────┼───────────────────────────────┼──────────────────────────┤
      │   JS Evaluates Custody Cards       │ (Client-side execution only   │                          │
      │   Matches SN, Employee, or Dept    │  zero server roundtrip delay) │                          │
-
+```
 ## 3. Technologies Used
 
 | Category | Technology | Version | Purpose |
