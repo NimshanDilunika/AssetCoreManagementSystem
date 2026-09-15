@@ -83,29 +83,42 @@ The application uses an N-Tier Model-View-Controller (MVC) architecture with cus
 
 ### Data Flow
 
-```
-Browser (User)          MaintenanceController        Entity Framework Core        SQL Server
-     │                          │                             │                        │
-1    ├── Open Add Ticket View ─►│                             │                        │
-     │  GET /Maintenance/       ├── Load Assets (SN + Name) ─►│                        │
-     │  AddMaintenance          │   LINQ Projections          ├── SELECT AssetId, SN ─►│
-     │                          │                             │   FROM Asset           │
-     │◄── Render Centered Form Card ────────────────────────────────────────────────────┤
-     │                                                                                   │
-2    ├── Submit Maintenance Form ►│                            │                        │
-     │  POST /Maintenance/       ├── Bind Record & LoggedBy   │                        │
-     │  AddMaintenance           ├── Context.Add(record) ────►│                        │
-     │                          │                             ├── INSERT INTO          │
-     │                          │                             │   MaintenanceRecords ─►│
-     │                          │                             │   COMMIT TRANSACTION   │
-     │◄── Redirect to Index (Grid) ──────────────────────────────────────────────────────┤
-     │                                                                                   │
-3    ├── Real-Time Keyword Filter ─┼─────────────────────────────┼────────────────────────┤
-     │  JS Evaluates DOM Card Data │ (Client-side execution only │                        │
-     │  Matches SN, Title, Vendor  │  zero roundtrip delay)      │                        │
-```
-
----
+Browser (User)                 EmployeeAssetController          Entity Framework Core            SQL Server
+     │                                    │                               │                          │
+  1  ├── Open Assign Asset View ─────────►│                               │                          │
+     │   GET /EmployeeAsset/Assign        ├── Fetch Available Assets ────►│                          │
+     │                                    │   (Status == 'Available')     ├── SELECT AssetId, SN, ──►│
+     │                                    │   & Active Employees          │   AssetName FROM Asset   │
+     │                                    │                               ├── SELECT EmployeeId, ───►│
+     │                                    │                               │   EmployeeName...        │
+     │◄── Render Assignment Form Card ────┴───────────────────────────────┤                          │
+     │    (Enforces [SN] - [Asset Name])                                                             │
+     │                                                                                               │
+  2  ├── Submit Assignment Form ─────────►│                               │                          │
+     │   POST /EmployeeAsset/Assign       ├── Validate Asset & Employee   │                          │
+     │   { AssetId, EmployeeId }          ├── Add EmployeeAsset Link ────►│                          │
+     │                                    ├── Update Asset Status:        │                          │
+     │                                    │   'Available' -> 'Assigned'   ├── BEGIN TRANSACTION      │
+     │                                    │                               ├── INSERT INTO            │
+     │                                    │                               │   EmployeeAssets... ────►│
+     │                                    │                               ├── UPDATE Assets          │
+     │                                    │                               │   SET Status='Assigned'─►│
+     │                                    │                               ├── COMMIT TRANSACTION ───►│
+     │◄── Redirect to Custody Ledger ─────┴───────────────────────────────┤                          │
+     │                                                                                               │
+  3  ├── Revoke Custody (Return Asset) ──►│                               │                          │
+     │   POST /EmployeeAsset/Delete/{id}  ├── Remove EmployeeAsset Link ─►│                          │
+     │                                    ├── Restore Asset Status:       ├── BEGIN TRANSACTION      │
+     │                                    │   'Assigned' -> 'Available'   ├── DELETE FROM            │
+     │                                    │                               │   EmployeeAssets... ────►│
+     │                                    │                               ├── UPDATE Assets          │
+     │                                    │                               │   SET Status='Available'►│
+     │                                    │                               ├── COMMIT TRANSACTION ───►│
+     │◄── Refresh Active Custody Ledger ──┴───────────────────────────────┤                          │
+     │                                                                                               │
+  4  ├── Instant Custody Filter ──────────┼───────────────────────────────┼──────────────────────────┤
+     │   JS Evaluates Custody Cards       │ (Client-side execution only   │                          │
+     │   Matches SN, Employee, or Dept    │  zero server roundtrip delay) │                          │
 
 ## 3. Technologies Used
 
