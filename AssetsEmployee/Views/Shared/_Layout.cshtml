@@ -1,79 +1,253 @@
-﻿<!DOCTYPE html>
+﻿@inject AssetsEmployee.Models.ApplicationDbContext DbContext
+@{
+    var notifications = new List<AssetsEmployee.Models.AppNotification>();
+
+    if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        if (User.IsInRole("Admin") || User.IsInRole("ITTechnician"))
+        {
+            notifications = DbContext.AppNotifications
+                 .Where(n => !n.IsCleared && n.TargetRole == "AdminTech")
+                 .OrderByDescending(n => n.CreatedAt)
+                 .ToList();
+        }
+        else if (User.IsInRole("OfficeUser"))
+        {
+            notifications = DbContext.AppNotifications
+                .Where(n => !n.IsCleared && n.TargetRole == "OfficeUser")
+                .OrderByDescending(n => n.CreatedAt)
+                .ToList();
+        }
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AssetsEmployee</title>
+    <title>@ViewData["Title"] - Asset Management System</title>
+
+    <!-- Bootstrap 5 & Icons -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        :root {
+            --app-primary: #0d6efd;
+            --app-bg: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--app-bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #212529;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* Sticky Fixed Navigation Bar */
+        .main-navbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            z-index: 1030;
+        }
+
+        .navbar-brand {
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: #4b5563 !important;
+            padding: 0.5rem 0.85rem !important;
+            border-radius: 6px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .nav-link:hover, .nav-link:focus {
+            color: var(--app-primary) !important;
+            background-color: #f1f5f9;
+        }
+
+        /* Notification Dropdown Styling */
+        .notification-dropdown {
+            width: 360px;
+            max-width: 90vw;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .notif-item {
+            border-left: 3px solid var(--app-primary);
+            transition: background-color 0.15s;
+        }
+
+        .notif-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .notif-badge {
+            font-size: 0.65rem;
+            padding: 0.25em 0.55em;
+        }
+
+        .footer {
+            margin-top: auto;
+            background-color: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold text-primary" asp-area="" asp-controller="EmployeeAsset" asp-action="Index">
-                    Asset_Employee
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg main-navbar mb-4 py-2">
+            <div class="container-fluid px-lg-4">
+                <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-box-seam-fill"></i>
+                    <span>AssetCore</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <!-- Left-side navigation: ONLY visible when logged in -->
-                    <ul class="navbar-nav me-auto">
-                        <!-- Assets: visible to Admin, ITTechnician, and Auditor -->
-                        @if (User.IsInRole("Admin") || User.IsInRole("ITTechnician") || User.IsInRole("Auditor"))
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <!-- Left Navigation Items -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Asset" asp-action="Index">Assets</a>
-                            </li>
-                          
-                        }
+                            <!-- Assets Management -->
+                            @if (User.IsInRole("Admin") || User.IsInRole("ITTechnician") || User.IsInRole("Auditor"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Asset" asp-action="Index">
+                                        <i class="bi bi-laptop me-1"></i> Assets
+                                    </a>
+                                </li>
+                            }
 
-                        <!-- Admin Only: Core Master Directories -->
-                        @if (User.IsInRole("Admin"))
-                        {
+                            <!-- Assignments / Custody -->
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Employee" asp-action="Index">Employees</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Department" asp-action="Index">Departments</a>
-                            </li>
-                        }
-
-                        <!-- Admin & Office User: Requests -->
-                        @if (User.Identity != null && User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("OfficeUser") || User.IsInRole("ITTechnician")))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark fw-semibold" asp-controller="AssetRequest" asp-action="Index">
-                                    <i class="bi bi-file-earmark-text"></i> Requests
+                                <a class="nav-link" asp-controller="EmployeeAsset" asp-action="Index">
+                                    <i class="bi bi-person-badge me-1"></i> Assignments
                                 </a>
                             </li>
-                              <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="EmployeeAsset" asp-action="Index">Assignments</a>
-                            </li>
+
+                            <!-- Equipment Requests -->
+                            @if (User.IsInRole("Admin") || User.IsInRole("OfficeUser") || User.IsInRole("ITTechnician"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="AssetRequest" asp-action="Index">
+                                        <i class="bi bi-file-earmark-text me-1"></i> Requests
+                                    </a>
+                                </li>
+                            }
+
+                            <!-- Master Administration -->
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="UserManagement" asp-action="Index">
+                                        <i class="bi bi-person-gear me-1"></i> Users
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Employee" asp-action="Index">
+                                        <i class="bi bi-people me-1"></i> Employees
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Department" asp-action="Index">
+                                        <i class="bi bi-building me-1"></i> Departments
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
 
-                    <!-- Right-side login/logout controls -->
-                    <ul class="navbar-nav ms-auto">
+                    <!-- Right Navigation Items (User Info & Notifications) -->
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item d-flex align-items-center me-3 text-dark">
-                                <i class="bi bi-person-circle me-1"></i> @User.Identity.Name
+                            <!-- Notification Center -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link position-relative p-2" href="#" id="notifMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                    <i class="bi bi-bell fs-5"></i>
+                                    @if (notifications.Any())
+                                    {
+                                        <span class="position-absolute top-1 start-100 translate-middle badge rounded-pill bg-danger notif-badge">
+                                            @notifications.Count
+                                            <span class="visually-hidden">unread messages</span>
+                                        </span>
+                                    }
+                                </a>
+
+                                <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow-lg p-0" aria-labelledby="notifMenu">
+                                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                                        <span class="fw-bold small text-secondary text-uppercase">Alerts & Messages</span>
+                                        <span class="badge bg-secondary rounded-pill">@notifications.Count</span>
+                                    </div>
+
+                                    <div style="max-height: 320px; overflow-y: auto;">
+                                        @if (!notifications.Any())
+                                        {
+                                            <div class="text-center py-4 text-muted">
+                                                <i class="bi bi-bell-slash fs-4 d-block mb-1"></i>
+                                                <small>No unread notifications</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var notif in notifications)
+                                            {
+                                                <div class="p-3 border-bottom notif-item">
+                                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                                        <p class="mb-1 text-dark small">@notif.Message</p>
+                                                        <form asp-controller="Notification" asp-action="Clear" method="post" class="m-0">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@notif.Id" />
+                                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                                            <button type="submit" class="btn-close btn-sm p-1" aria-label="Dismiss" title="Clear"></button>
+                                                        </form>
+                                                    </div>
+                                                    <div class="text-muted" style="font-size: 0.72rem;">
+                                                        <i class="bi bi-clock me-1"></i>@notif.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
                             </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
-                                </form>
+
+                            <!-- User Profile & Sign Out -->
+                            <li class="nav-item d-flex align-items-center ms-lg-2">
+                                <div class="d-flex align-items-center gap-2 border-start ps-lg-3 py-1">
+                                    <span class="d-flex flex-column text-end d-none d-sm-flex">
+                                        <span class="fw-semibold small lh-1 text-dark">@User.Identity.Name</span>
+                                        <span class="text-muted" style="font-size: 0.75rem;">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</span>
+                                    </span>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Log out">
+                                            <i class="bi bi-box-arrow-right"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="btn btn-primary btn-sm px-3" asp-controller="Account" asp-action="Login">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+                                </a>
                             </li>
                         }
                     </ul>
@@ -82,12 +256,22 @@
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody() <!-- 👈 Required to render views -->
+    <!-- Main View Content -->
+    <div class="container-fluid px-lg-4 mb-4">
+        <main role="main">
+            @RenderBody()
         </main>
     </div>
 
+    <!-- Standard Footer -->
+    <footer class="footer py-3 mt-auto text-muted">
+        <div class="container-fluid px-lg-4 d-flex justify-content-between align-items-center">
+            <span>&copy; @DateTime.UtcNow.Year - AssetCore Management</span>
+            <span class="small text-secondary">Asset Custody & Tracking Engine</span>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

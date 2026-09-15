@@ -1,65 +1,85 @@
 ﻿@model AssetsEmployee.Models.Employee
 @{
-    ViewData["Title"] = "Update Employee";
+    ViewData["Title"] = "Edit Employee";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Update Employee</h1>
-</div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0">Edit Employee Details</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-controller="Employee" asp-action="UpdateEmployeeItem" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="employeeid" value="@Model.EmployeeId" />
 
-<form asp-controller="Employee" asp-action="UpdateEmployeeItem" method="post">
-    <div class="mb-3">
-    <label for="employeename" class="form-label">Employee Name</label>
-    <input type="text" 
-           name="employeename" 
-           value="@Model?.EmployeeName" 
-           class="form-control" 
-           id="employeename" 
-           placeholder="Enter Employee Name" 
-           oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');" 
-           required />
-    <span class="text-danger">@Html.ValidationMessage("EmployeeName")</span>
+                    <div class="mb-3">
+                        <label for="employeename" class="form-label fw-semibold">Employee Name</label>
+                        <input type="text" 
+                               name="employeename" 
+                               value="@Model?.EmployeeName" 
+                               class="form-control" 
+                               id="employeename" 
+                               placeholder="Enter Employee Name" 
+                               oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '');" 
+                               required />
+                        <span class="text-danger small">@Html.ValidationMessage("EmployeeName")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" 
+                               value="@Model.Email" 
+                               name="email" 
+                               class="form-control" 
+                               id="email" 
+                               placeholder="name@company.com" 
+                               required />
+                        <span class="text-danger small">@Html.ValidationMessage("Email")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phoneno" class="form-label fw-semibold">Phone Number</label>
+                        <input type="text"
+                               value="@Model.PhoneNo"
+                               name="phoneno"
+                               class="form-control"
+                               id="phoneno"
+                               maxlength="10"
+                               placeholder="10-digit mobile number"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                               required />
+                        <span class="text-danger small">@Html.ValidationMessage("PhoneNo")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="departmentid" class="form-label fw-semibold">Assigned Department</label>
+                        <select name="departmentid" class="form-select" id="departmentid" required>
+                            <option value="">-- Select Department --</option>
+                            @if (ViewBag.Departments != null)
+                            {
+                                foreach (var dept in ViewBag.Departments)
+                                {
+                                    if (dept.DepartmentId == Model.DepartmentId)
+                                    {
+                                        <option value="@dept.DepartmentId" selected>@dept.DepartmentName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-controller="Employee" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">Update Employee</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" value="@Model.Email" name="email" class="form-control" id="email" required />
-        <span class="text-danger">@Html.ValidationMessage("Email")</span>
-    </div>
-    <div class="mb-3">
-        <label for="phoneno" class="form-label">Phone No</label>
-        <input type="text"
-               value="@Model.PhoneNo"
-               name="phoneno"
-               class="form-control"
-               id="phoneno"
-               maxlength="10"
-               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-               required />
-        <span class="text-danger">@Html.ValidationMessage("PhoneNo")</span>
-    </div>
-    <div class="mb-3">
-        <label for="departmentid" class="form-label">Department</label>
-        <select name="departmentid" class="form-select" id="departmentid" required>
-            <option value="">-- Select Department --</option>
-            @if (ViewBag.Departments != null)
-            {
-                foreach (var dept in ViewBag.Departments)
-                {
-                    if (dept.DepartmentId == Model.DepartmentId)
-                    {
-                        <option value="@dept.DepartmentId" selected>@dept.DepartmentName</option>
-                    }
-                    else
-                    {
-                        <option value="@dept.DepartmentId">@dept.DepartmentName</option>
-                    }
-                }
-            }
-        </select>
-    </div>
-    <input type="hidden" name="employeeid" value="@Model.EmployeeId" />
-   <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Update Employee</button>
-        <a asp-controller="Employee" asp-action="Index" class="btn btn-secondary">Cancel</a>
-    </div>
-</form>

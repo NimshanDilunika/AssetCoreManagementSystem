@@ -48,6 +48,7 @@ namespace AssetsEmployee.Controllers
         }
 
         // POST: /AssetRequest/Create
+        // POST: /AssetRequest/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AssetRequest request)
@@ -59,6 +60,23 @@ namespace AssetsEmployee.Controllers
 
                 _context.AssetRequests.Add(request);
                 await _context.SaveChangesAsync();
+
+                // 1. Fetch Employee name for notification message
+                var employee = await _context.Employee.FindAsync(request.EmployeeId);
+                string employeeName = employee?.EmployeeName ?? "Unknown Employee";
+
+                // 2. Generate notification for Admin & ITTechnician
+                var adminTechNotification = new AppNotification
+                {
+                    TargetRole = "AdminTech",
+                    RequestId = request.RequestId,
+                    Message = $"New Request: {employeeName} requested {request.RequestedCategory}. Reason: {request.Reason}",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.AppNotifications.Add(adminTechNotification);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction(nameof(Index));
             }
 
@@ -72,15 +90,19 @@ namespace AssetsEmployee.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Review(int requestId, RequestStatus status)
         {
-            var req = await _context.AssetRequests.FindAsync(requestId);
+            var req = await _context.AssetRequests
+                .Include(r => r.Employee)
+                .FirstOrDefaultAsync(r => r.RequestId == requestId);
+
             if (req == null) return NotFound();
 
             req.ActionedDate = DateTime.UtcNow;
-            req.ActionedByUserId = User.FindFirstValue(ClaimTypes.Name) ?? "admin";
+            req.ActionedByUserId = User.Identity?.Name ?? "admin";
+
+            string assetName = string.IsNullOrWhiteSpace(req.RequestedCategory) ? "equipment" : req.RequestedCategory;
 
             if (status == RequestStatus.Approved)
             {
-                // Automatically allocate the first available asset of that category
                 var availableAsset = await _context.Asset
                     .FirstOrDefaultAsync(a => a.Status == AssetStatus.Available
                                            && a.AssetName.ToLower() == req.RequestedCategory.ToLower());
@@ -90,30 +112,55 @@ namespace AssetsEmployee.Controllers
                     availableAsset.Status = AssetStatus.Assigned;
                     req.AssetId = availableAsset.AssetId;
                     req.Status = RequestStatus.Fulfilled;
+                    assetName = availableAsset.AssetName;
 
                     _context.EmployeeAsset.Add(new EmployeeAsset
                     {
                         EmployeeId = req.EmployeeId,
-                        AssetId = availableAsset.AssetId
-                    });
-
-                    _context.AssetAssignmentLogs.Add(new AssetAssignmentLog
-                    {
                         AssetId = availableAsset.AssetId,
-                        EmployeeId = req.EmployeeId,
-                        AssignedDate = DateTime.UtcNow,
-                        Notes = $"Auto-fulfilled Request #{req.RequestId} ({req.RequestedCategory})"
+                        AssignedDate = DateTime.UtcNow
                     });
                 }
                 else
                 {
-                    // If no stock exists, still approve without linking
                     req.Status = RequestStatus.Approved;
                 }
+
+                // Office User Notification linked strictly by EmployeeId
+                _context.AppNotifications.Add(new AppNotification
+                {
+                    TargetRole = "OfficeUser",
+                    EmployeeId = req.EmployeeId,
+                    RequestId = req.RequestId,
+                    Message = $"Your request for {assetName} is accepted. Contact the department.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsCleared = false
+                });
             }
             else
             {
                 req.Status = RequestStatus.Rejected;
+
+                // Office User Notification linked strictly by EmployeeId
+                _context.AppNotifications.Add(new AppNotification
+                {
+                    TargetRole = "OfficeUser",
+                    EmployeeId = req.EmployeeId,
+                    RequestId = req.RequestId,
+                    Message = $"Your request for {assetName} is rejected. Contact the department.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsCleared = false
+                });
+            }
+
+            // Auto-delete Admin/Tech notification for this request
+            var staffAlerts = await _context.AppNotifications
+                .Where(n => n.RequestId == requestId && n.TargetRole == "AdminTech")
+                .ToListAsync();
+
+            if (staffAlerts.Any())
+            {
+                _context.AppNotifications.RemoveRange(staffAlerts);
             }
 
             await _context.SaveChangesAsync();

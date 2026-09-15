@@ -1,0 +1,52 @@
+﻿@model AssetsEmployee.Models.User
+@{
+    ViewData["Title"] = "Confirm Delete User";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-person-x-fill me-2"></i>Confirm User Deletion</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead text-danger fw-semibold">Are you sure you want to permanently delete this user?</p>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">User ID:</dt>
+                    <dd class="col-sm-8">#@Model.UserId</dd>
+
+                    <dt class="col-sm-4">Username:</dt>
+                    <dd class="col-sm-8 fw-bold">@Model.Username</dd>
+
+                    <dt class="col-sm-4">Role:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Role == "Admin" ? "bg-primary" : "bg-secondary")">
+                            @Model.Role
+                        </span>
+                    </dd>
+
+                    <dt class="col-sm-4">Account Status:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.LockoutEnd.HasValue && Model.LockoutEnd.Value > DateTime.UtcNow)
+                        {
+                            <span class="badge bg-danger">Locked Out</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+                <a asp-controller="UserManagement" asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <form asp-controller="UserManagement" asp-action="DeleteUser" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userid" value="@Model.UserId" />
+                    <button type="submit" class="btn btn-danger">Yes, Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -10,13 +10,11 @@ namespace AssetsEmployee.Models
         [Key]
         public int Id { get; set; }
 
-        // Nullable if targeted to a role group (e.g., Admin/ITTechnician)
         public string? TargetRole { get; set; }
 
-        // Target username for specific user alerts (e.g., office user username)
-        public string? TargetUsername { get; set; }
+        // Direct numeric ID link — no string or username comparison
+        public int? EmployeeId { get; set; }
 
-        // Linked request ID to enable automatic deletion when reviewed
         public int? RequestId { get; set; }
 
         [Required]
