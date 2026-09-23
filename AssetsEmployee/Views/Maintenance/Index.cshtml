@@ -1,0 +1,144 @@
+﻿@model IEnumerable<AssetsEmployee.Models.MaintenanceRecord>
+@{
+    ViewData["Title"] = "Asset Maintenance";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">Maintenance & Servicing</h3>
+        <p class="text-muted small mb-0">Track hardware service tickets, external repair vendors, and costs.</p>
+    </div>
+    <a asp-action="AddMaintenance" class="btn btn-success">
+        <i class="bi bi-tools me-1"></i> Log Maintenance
+    </a>
+</div>
+
+<!-- Search Bar -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+        <div class="row">
+            <div class="col-md-6 col-lg-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text"
+                           id="maintenanceSearchInput"
+                           class="form-control border-start-0 ps-0"
+                           placeholder="Search by asset, vendor, status, or title..."
+                           onkeyup="filterMaintenanceCards()" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Maintenance Cards Grid -->
+<div class="row g-3" id="maintenanceGrid">
+    @if (Model == null || !Model.Any())
+    {
+        <div class="col-12 text-center py-5 text-muted">
+            <i class="bi bi-wrench-adjustable fs-1 d-block mb-2 text-secondary"></i>
+            <p class="mb-0">No maintenance tickets logged.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            var badgeClass = item.Status switch
+            {
+                "Completed" => "bg-success",
+                "InProgress" => "bg-warning text-dark",
+                "Cancelled" => "bg-danger",
+                _ => "bg-primary"
+            };
+
+            <div class="col-md-6 col-xl-4 maintenance-card-wrapper"
+                data-search="@item.MaintenanceId @item.Title @item.Asset?.AssetName @item.Asset?.SerialNo @item.ServiceVendor @item.Status">
+                <div class="card border-0 shadow-sm rounded-3 h-100">
+                    <div class="card-body d-flex flex-column p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">@item.Title</h5>
+                                <span class="badge bg-light text-secondary border">#@item.MaintenanceId</span>
+                            </div>
+                            <span class="badge @badgeClass">@item.Status</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="badge bg-light text-dark border">
+                                <i class="bi bi-laptop me-1"></i>
+                                @(item.Asset != null ? $"{item.Asset.SerialNo} - {item.Asset.AssetName}" : "Unspecified Asset")
+                            </span>
+                        </div>
+
+                        <p class="text-muted small flex-grow-1 mb-3">@item.Description</p>
+
+                        <div class="small text-secondary mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Vendor:</span>
+                                <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(item.ServiceVendor) ? "In-House" : item.ServiceVendor)</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Cost:</span>
+                                <span class="fw-semibold text-dark">$@item.Cost.ToString("F2")</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Scheduled:</span>
+                                <span class="fw-semibold text-dark">@item.ScheduledDate.ToString("yyyy-MM-dd")</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-auto">
+                            <a asp-action="UpdateMaintenance" asp-route-id="@item.MaintenanceId" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i> Edit
+                            </a>
+                            <a asp-action="ConfirmDeleteMaintenance" asp-route-id="@item.MaintenanceId" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<div id="noResultsMsg" class="text-center py-5 text-muted d-none">
+    <i class="bi bi-search fs-2 d-block mb-2 text-secondary"></i>
+    <p class="mb-0">No maintenance tickets match your search.</p>
+</div>
+
+@section Scripts {
+    <script>
+        function filterMaintenanceCards() {
+            const query = document.getElementById("maintenanceSearchInput").value.toLowerCase().trim();
+            const cards = document.querySelectorAll(".maintenance-card-wrapper");
+            const noResults = document.getElementById("noResultsMsg");
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const searchData = (card.getAttribute("data-search") || "").toLowerCase();
+                if (searchData.includes(query)) {
+                    card.classList.remove("d-none");
+                    visibleCount++;
+                } else {
+                    card.classList.add("d-none");
+                }
+            });
+
+            if (visibleCount === 0 && cards.length > 0) {
+                noResults.classList.remove("d-none");
+            } else {
+                noResults.classList.add("d-none");
+            }
+        }
+
+        function clearSearch() {
+            const input = document.getElementById("maintenanceSearchInput");
+            input.value = "";
+            filterMaintenanceCards();
+            input.focus();
+        }
+    </script>
+}

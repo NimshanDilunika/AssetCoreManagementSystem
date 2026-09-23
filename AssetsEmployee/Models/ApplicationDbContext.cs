@@ -17,5 +17,8 @@ namespace AssetsEmployee.Models
         public DbSet<AssetRequest> AssetRequests { get; set; }
         public DbSet<AssetAssignmentLog> AssetAssignmentLogs { get; set; }
         public DbSet<AppNotification> AppNotifications { get; set; }
+
+        public DbSet<MaintenanceRecord> MaintenanceRecords { get; set; }
+
     }
 }
